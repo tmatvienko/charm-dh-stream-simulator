@@ -1,0 +1,54 @@
+#!/bin/bash
+#####################################################################
+#
+# Install DeviceHive simulator
+#
+# Notes: 
+# 
+# Maintainer: Samuel Cozannet <samuel.cozannet@canonical.com> 
+#
+#####################################################################
+
+# Validating I am running on debian-like OS
+[ -f /etc/debian_version ] || {
+	echo "We are not running on a Debian-like system. Exiting..."
+	exit 0
+}
+
+set -ex 
+# Load Configuration
+MYNAME="$(readlink -f "$0")"
+MYDIR="$(dirname "${MYNAME}")"
+MYAPP="dh-stream-simulator"
+MYCONF="${MYDIR}/../etc/${MYAPP}.conf"
+MYLIB="${MYDIR}/../lib/bashlib.sh"
+INSTALL_DIR="/opt"
+# JUJULIB="${MYDIR}/../lib/jujulib.sh"
+
+
+for file in "${MYCONF}" "${MYLIB}"; do
+	[ -f ${file} ] && source ${file} || { 
+		juju-log "Could not find required files. Exiting..."
+	}
+done 
+
+if [ $(is_sudoer) -eq 0 ]; then
+	die "You must be root or sudo to run this script"
+fi
+
+status-set maintenance "Installing Dependencies"
+ensure_cmd_or_install_package_apt git git
+ensure_cmd_or_install_package_apt node nodejs npm
+ln -sf `which nodejs` /usr/bin/node
+
+status-set maintenance "Downloading Software"
+cd "${INSTALL_DIR}"
+git clone https://github.com/tmatvienko/devicehive-spark-streaming-simulator.git ${MYAPP}
+
+find "${INSTALL_DIR}" -name "*.sh" -exec chmod +x {} \;
+cd ${MYAPP}
+npm install --silent
+
+cd ~
+
+status-set maintenance "Moving to configuration"

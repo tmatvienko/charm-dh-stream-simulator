@@ -1,0 +1,11 @@
+name: dh-stream-simulator
+summary: Simple Stream simulator for DeviceHive
+maintainer: Samuel Cozannet <samnco@gmail.com>
+description: |
+  This charm is a simple stream simaulator for DviceHive to ease demo work. 
+tags:
+  - streaming
+subordinate: false
+requires:
+  dh:
+    interface: http

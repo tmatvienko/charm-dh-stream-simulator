@@ -1,0 +1,51 @@
+#!/bin/bash
+# Validating I am running on debian-like OS
+[ -f /etc/debian_version ] || {
+	echo "We are not running on a Debian-like system. Exiting..."
+	exit 0
+}
+
+set -ex 
+# Load Configuration
+MYNAME="$(readlink -f "$0")"
+MYDIR="$(dirname "${MYNAME}")"
+MYAPP="dh-stream-simulator"
+MYCONF="${MYDIR}/../etc/${MYAPP}.conf"
+MYLIB="${MYDIR}/../lib/bashlib.sh"
+INSTALL_DIR="/opt"
+# JUJULIB="${MYDIR}/../lib/jujulib.sh"
+
+for file in "${MYCONF}" "${MYLIB}"; do
+	[ -f ${file} ] && source ${file} || { 
+		juju-log "Could not find required files. Exiting..."
+	}
+done 
+
+if [ $(is_sudoer) -eq 0 ]; then
+	die "You must be root or sudo to run this script"
+fi
+
+status-set maintenance "Preparing Device Configuration"
+ACCESS_KEY="$(config-get access-key)"
+DEVICE_ID="$(hostname --fqdn)"
+DEVICE_KEY="$(config-get device-key)"
+DEVICE_CLASS="$(config-get device-class)"
+DEVICE_UUID="$(config-get uuid)"
+INTERVAL="$(config-get interval)"
+VALUE_CHANGE_INTERVAL="$(config-get value-change-interval)"
+MAX_POS_VALUE="$(config-get max-positive-value)"
+MAX_NEG_VALUE="$(config-get max-negative-value)"
+MAC_ADDRESS="$([ -f /sys/class/net/eth0/address ] && (cat /sys/class/net/eth0/address | tr -d ':') || echo '000000000000')"
+
+sed -e "s,ACCESS_KEY,${ACCESS_KEY},g" \
+	-e "s/DEVICE_ID/${DEVICE_ID}/g" \
+	-e "s/DEVICE_KEY/${DEVICE_KEY}/g" \
+	-e "s/DEVICE_CLASS/${DEVICE_CLASS}/g" \
+	-e "s/DEVICE_UUID/${DEVICE_UUID}/g" \
+	-e "s/VALUE_CHANGE_INTERVAL/${VALUE_CHANGE_INTERVAL}/g" \
+	-e "s/INTERVAL/${INTERVAL}/g" \
+	-e "s/MAX_POS_VALUE/${MAX_POS_VALUE}/g" \
+	-e "s/MAX_NEG_VALUE/${MAX_NEG_VALUE}/g" \
+	-e "s/MAC_ADDRESS/${MAC_ADDRESS}/g" \
+	"${MYDIR}/../etc/config.json.template" > "${INSTALL_DIR}/${MYAPP}/config.json"
+

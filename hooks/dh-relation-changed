@@ -1,0 +1,44 @@
+#!/bin/bash
+# Validating I am running on debian-like OS
+[ -f /etc/debian_version ] || {
+	echo "We are not running on a Debian-like system. Exiting..."
+	exit 0
+}
+
+set -ex 
+# Load Configuration
+MYNAME="$(readlink -f "$0")"
+MYDIR="$(dirname "${MYNAME}")"
+MYAPP="dh-stream-simulator"
+MYCONF="${MYDIR}/../etc/${MYAPP}.conf"
+MYLIB="${MYDIR}/../lib/bashlib.sh"
+INSTALL_DIR="/opt"
+# JUJULIB="${MYDIR}/../lib/jujulib.sh"
+
+
+for file in "${MYCONF}" "${MYLIB}"; do
+	[ -f ${file} ] && source ${file} || { 
+		juju-log "Could not find required files. Exiting..."
+	}
+done 
+
+if [ $(is_sudoer) -eq 0 ]; then
+	die "You must be root or sudo to run this script"
+fi
+
+status-set maintenance "Configuring relation"
+hooks/stop
+
+hooks/config-changed
+
+DH_HOST=$(relation-get DH_PRIV_ADDR)
+DH_PORT=8080
+
+sed -i -e "s/DH_HOST/${DH_HOST}/g" \
+	-e "s/DH_PORT/${DH_PORT}/g" \
+	"${INSTALL_DIR}/${MYAPP}/config.json" 
+
+hooks/start
+
+exit $?
+

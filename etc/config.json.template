@@ -1,0 +1,18 @@
+{
+    "serviceUrl": "http://DH_HOST:DH_PORT/api/rest",
+    "accessKey": "ACCESS_KEY",
+    "deviceId": "DEVICE_ID",
+    "deviceKey": "DEVICE_KEY",
+    "name": "DEVICE_ID",
+    "network": "default-test",
+    "deviceClass": "DEVICE_CLASS",
+    "deviceClassVersion": "0.1",
+    "equipments": [{
+        "mac": "MAC_ADDRESS",
+        "uuid": "DEVICE_UUID",
+        "interval": INTERVAL,
+        "valueChangeInterval": VALUE_CHANGE_INTERVAL,
+        "maxPositiveValue": MAX_POS_VALUE,
+        "maxNegativeValue": MAX_NEG_VALUE
+    }]
+}
